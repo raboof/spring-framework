@@ -372,33 +372,16 @@ public abstract class CollectionUtils {
      * @param list the list to be sorted, must implement the optional 'add(int, T)' method
      */
     public static <T> void sortTopologically(List<T> list, Comparator<? super T> comparator) {
-        Deque<T> stillToBeAdded = new LinkedList<T>(list);
-        list.clear();
+        // Index of the first element that has not been sorted yet.
+        int sortedUpUntil = 0;
 
-        while (!stillToBeAdded.isEmpty()) {
-            T current = stillToBeAdded.pop();
-            int lastValidInsertionPoint = getLastValidInsertionPoint(list, current, comparator);
+        while (list.size() > sortedUpUntil) {
+            int lastValidInsertionPoint = getLastValidInsertionPoint(list, sortedUpUntil, comparator);
 
-            moveFromEndToFront(list, stillToBeAdded, lastValidInsertionPoint);
-
-            while (list.size() > lastValidInsertionPoint) {
-                stillToBeAdded.push(list.remove(list.size() - 1));
+            if (lastValidInsertionPoint != sortedUpUntil) {
+                list.add(lastValidInsertionPoint, list.remove(sortedUpUntil));
             }
-
-            list.add(lastValidInsertionPoint, current);
-        }
-    }
-
-    /**
-     * Move elements from the back of one list to the front of the other, keeping their order intact.
-     *
-     * @param from remove elements from the end of this list
-     * @param to add elements to the front of this list
-     * @param firstIndex index of first element in 'from' to be moved
-     */
-    private static <T> void moveFromEndToFront(List<T> from, Deque<T> to, int firstIndex) {
-        while (from.size() > firstIndex) {
-            to.push(from.remove(from.size() - 1));
+            sortedUpUntil = lastValidInsertionPoint + 1;
         }
     }
 
@@ -408,10 +391,10 @@ public abstract class CollectionUtils {
      *
      * @return the highest index at which 'element' can be added to 'list' without disturbing ordering
      */
-    private static <T> int getLastValidInsertionPoint(List<T> list, T element, Comparator<? super T> comparator) {
-        int maxLocation = list.size();
+    private static <T> int getLastValidInsertionPoint(List<T> list, int maxLocation, Comparator<? super T> comparator) {
+        T element = list.get(maxLocation);
 
-        for (int i = list.size() - 1; i >= 0; i--) {
+        for (int i = maxLocation - 1; i >= 0; i--) {
             T currentReference = list.get(i);
 
             if (comparator.compare(element, currentReference) < 0) {
