@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Deque;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -357,9 +359,71 @@ public abstract class CollectionUtils {
 		return toMultiValueMap(unmodifiableMap);
 	}
 
+    /**
+     * Sorts the array by doing a 'topology sort', which allows the Comparator parameter to be a partial ordering.
+     *
+     * In other words, this sort method does not assume transitivity of equality: when the comparator returns '0', we
+     * interpret this as "we do not care how these 2 elements are ordered relative to each other", but when
+     * a.compare(b) == 0 and b.compare(c) == 0, we do not assume a.compare(c) will also be 0. Most search algorithms
+     * do make this assumption.
+     *
+     * As a secondary goal, we try to leave the original ordering intact as much as possible.
+     *
+     * @param list the list to be sorted, must implement the optional 'add(int, T)' method
+     */
+    public static <T> void sortTopologically(List<T> list, Comparator<? super T> comparator) {
+        Deque<T> stillToBeAdded = new LinkedList<T>(list);
+        list.clear();
+
+        while (!stillToBeAdded.isEmpty()) {
+            T current = stillToBeAdded.pop();
+            int lastValidInsertionPoint = getLastValidInsertionPoint(list, current, comparator);
+
+            moveFromEndToFront(list, stillToBeAdded, lastValidInsertionPoint);
+
+            while (list.size() > lastValidInsertionPoint) {
+                stillToBeAdded.push(list.remove(list.size() - 1));
+            }
+
+            list.add(lastValidInsertionPoint, current);
+        }
+    }
+
+    /**
+     * Move elements from the back of one list to the front of the other, keeping their order intact.
+     *
+     * @param from remove elements from the end of this list
+     * @param to add elements to the front of this list
+     * @param firstIndex index of first element in 'from' to be moved
+     */
+    private static <T> void moveFromEndToFront(List<T> from, Deque<T> to, int firstIndex) {
+        while (from.size() > firstIndex) {
+            to.push(from.remove(from.size() - 1));
+        }
+    }
+
+    /**
+     * @list the list to which the element will be added, assumed to be already partially ordered by this comparator and
+     * not contain null values
+     *
+     * @return the highest index at which 'element' can be added to 'list' without disturbing ordering
+     */
+    private static <T> int getLastValidInsertionPoint(List<T> list, T element, Comparator<? super T> comparator) {
+        int maxLocation = list.size();
+
+        for (int i = list.size() - 1; i >= 0; i--) {
+            T currentReference = list.get(i);
+
+            if (comparator.compare(element, currentReference) < 0) {
+                maxLocation = i;
+            }
+        }
+
+        return maxLocation;
+    }
 
 
-	/**
+    /**
 	 * Iterator wrapping an Enumeration.
 	 */
 	private static class EnumerationIterator<E> implements Iterator<E> {

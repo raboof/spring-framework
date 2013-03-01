@@ -515,6 +515,36 @@ public class MediaTypeTests {
 		}
 	}
 
+    @Test
+    public void sortBySpecificityMixed() {
+        MediaType applicationJson = MediaType.parseMediaType("application/json");
+        MediaType textJavascript = MediaType.parseMediaType("text/javascript");
+        MediaType textPlainLatin = MediaType.parseMediaType("text/plain;charset=ISO-8859-1");
+        MediaType genericFallback = MediaType.parseMediaType("*/*;q=0.01");
+        MediaType applicationJsonUtf8 = MediaType.parseMediaType("application/json;charset=UTF-8");
+
+        List<MediaType> input = new ArrayList<MediaType>();
+        input.add(applicationJson);
+        input.add(textJavascript);
+        input.add(textPlainLatin);
+        input.add(genericFallback);
+        input.add(applicationJsonUtf8);
+
+        List<MediaType> result = new ArrayList<MediaType>(input);
+        MediaType.sortBySpecificity(result);
+
+        List<MediaType> expected = new ArrayList<MediaType>();
+        expected.add(applicationJsonUtf8);
+        expected.add(applicationJson);
+        expected.add(textJavascript);
+        expected.add(textPlainLatin);
+        expected.add(genericFallback);
+
+        for (int i = 0; i < result.size(); i++) {
+            assertSame("Invalid media type at " + i, expected.get(i), result.get(i));
+        }
+    }
+
 	@Test
 	public void testWithConversionService() {
 		ConversionService conversionService = new DefaultConversionService();

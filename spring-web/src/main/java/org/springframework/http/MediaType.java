@@ -799,7 +799,7 @@ public class MediaType implements Comparable<MediaType> {
 	public static void sortBySpecificity(List<MediaType> mediaTypes) {
 		Assert.notNull(mediaTypes, "'mediaTypes' must not be null");
 		if (mediaTypes.size() > 1) {
-			Collections.sort(mediaTypes, SPECIFICITY_COMPARATOR);
+			CollectionUtils.sortTopologically(mediaTypes, SPECIFICITY_COMPARATOR);
 		}
 	}
 
