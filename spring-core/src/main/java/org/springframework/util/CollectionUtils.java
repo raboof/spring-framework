@@ -359,54 +359,59 @@ public abstract class CollectionUtils {
 		return toMultiValueMap(unmodifiableMap);
 	}
 
-    /**
-     * Sorts the array by doing a 'topology sort', which allows the Comparator parameter to be a partial ordering.
-     *
-     * In other words, this sort method does not assume transitivity of equality: when the comparator returns '0', we
-     * interpret this as "we do not care how these 2 elements are ordered relative to each other", but when
-     * a.compare(b) == 0 and b.compare(c) == 0, we do not assume a.compare(c) will also be 0. Most search algorithms
-     * do make this assumption.
-     *
-     * As a secondary goal, we try to leave the original ordering intact as much as possible.
-     *
-     * @param list the list to be sorted, must implement the optional 'add(int, T)' method
-     */
-    public static <T> void sortTopologically(List<T> list, Comparator<? super T> comparator) {
-        // Index of the first element that has not been sorted yet.
-        int sortedUpUntil = 0;
+	/**
+	 * Sorts the array by doing a 'topology sort', which allows the Comparator parameter
+	 * to be a partial ordering.
+	 *
+	 * In other words, this sort method does not assume transitivity of equality: when
+	 * the comparator returns '0', we interpret this as "we do not care how these 2
+	 * elements are ordered relative to each other", but when a.compare(b) == 0 and
+	 * b.compare(c) == 0, we do not assume a.compare(c) will also be 0. Most sort
+	 * algorithms do make this assumption.
+	 *
+	 * As a secondary goal, we try to leave the original ordering intact as much as possible.
+	 *
+	 * @param list the list to be sorted, must implement the optional 'add(int, T)' method
+	 */
+	public static <T> void sortTopologically(List<T> list, Comparator<? super T> comparator) {
+		// Index of the first element that has not been sorted yet.
+		int sortedUpUntil = 0;
 
-        while (list.size() > sortedUpUntil) {
-            int lastValidInsertionPoint = getLastValidInsertionPoint(list, sortedUpUntil, comparator);
+		while (list.size() > sortedUpUntil) {
+			int lastValidInsertionPoint =
+					getLastValidInsertionPoint(list, sortedUpUntil, comparator);
 
-            if (lastValidInsertionPoint != sortedUpUntil) {
-                list.add(lastValidInsertionPoint, list.remove(sortedUpUntil));
-            }
-            sortedUpUntil = lastValidInsertionPoint + 1;
-        }
-    }
+			if (lastValidInsertionPoint != sortedUpUntil) {
+				list.add(lastValidInsertionPoint, list.remove(sortedUpUntil));
+			}
+			sortedUpUntil = lastValidInsertionPoint + 1;
+		}
+	}
 
-    /**
-     * @list the list to which the element will be added, assumed to be already partially ordered by this comparator and
-     * not contain null values
-     *
-     * @return the highest index at which 'element' can be added to 'list' without disturbing ordering
-     */
-    private static <T> int getLastValidInsertionPoint(List<T> list, int maxLocation, Comparator<? super T> comparator) {
-        T element = list.get(maxLocation);
+	/**
+	 * @param list the list to which the element will be added, assumed to be already
+	 * partially ordered by this comparator and not contain null values
+	 *
+	 * @return the highest index at which 'element' can be added to 'list' without
+	 * disturbing ordering
+	 */
+	private static <T> int getLastValidInsertionPoint(List<T> list, int maxLocation,
+													  Comparator<? super T> comparator) {
+		T element = list.get(maxLocation);
 
-        for (int i = maxLocation - 1; i >= 0; i--) {
-            T currentReference = list.get(i);
+		for (int i = maxLocation - 1; i >= 0; i--) {
+			T currentReference = list.get(i);
 
-            if (comparator.compare(element, currentReference) < 0) {
-                maxLocation = i;
-            }
-        }
+			if (comparator.compare(element, currentReference) < 0) {
+				maxLocation = i;
+			}
+		}
 
-        return maxLocation;
-    }
+		return maxLocation;
+	}
 
 
-    /**
+	/**
 	 * Iterator wrapping an Enumeration.
 	 */
 	private static class EnumerationIterator<E> implements Iterator<E> {
